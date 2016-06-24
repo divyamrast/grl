@@ -175,7 +175,6 @@ void LeoBaseEnvironment::configure(Configuration &config)
   if (exporter_)
     exporter_->init({"time", "state0", "state1", "action", "reward", "terminal"});
 
-  /*
   /////////////////////////////////////////////////
   // Setup path to a configuration file
   xml_ = config["xml"].str();
@@ -198,39 +197,23 @@ void LeoBaseEnvironment::configure(Configuration &config)
   // Read rewards and preprogrammed angles
   bh_->readConfig(xmlConfig.root());
 
-  // Create ode object which resolves states and actions
-  ODESTGEnvironment *ode = new ODESTGEnvironment();
-  if (!ode->configure(config))
-  {
-    ERROR("Could not initialize STG ODE environment");
-    return;
-  }
+  std::vector<std::string> sensors =    { std::string("robot.torso_boom.angle"), std::string("robot.torso_boom.anglerate"),
+                                          std::string("robot.shoulder.angle"),   std::string("robot.shoulder.anglerate"),
+                                          std::string("robot.hipright.angle"),   std::string("robot.hipright.anglerate"),
+                                          std::string("robot.hipleft.angle"),    std::string("robot.hipleft.anglerate"),
+                                          std::string("robot.kneeright.angle"),  std::string("robot.kneeright.anglerate"),
+                                          std::string("robot.kneeleft.angle"),   std::string("robot.kneeleft.anglerate"),
+                                          std::string("robot.ankleright.angle"), std::string("robot.ankleright.anglerate"),
+                                          std::string("robot.ankleleft.angle"),  std::string("robot.ankleleft.anglerate"),
+                                          std::string("robot.toeright.contact"), std::string("robot.heelright.contact"),
+                                          std::string("robot.toeleft.contact"),  std::string("robot.heelleft.contact")
+                                        };
 
-  // Select states and actions that are delivered to an agent
-  configParseObservations(config, ode->getSensors());
-  configParseActions(config, ode->getActuators());
-
-  delete ode;
-*/
-
-  std::vector<std::string> sensors = { std::string("robot.torso_boom.angle"), std::string("robot.torso_boom.anglerate"),
-                                            std::string("robot.shoulder.angle"),   std::string("robot.shoulder.anglerate"),
-                                            std::string("robot.hipright.angle"),   std::string("robot.hipright.anglerate"),
-                                            std::string("robot.hipleft.angle"),    std::string("robot.hipleft.anglerate"),
-                                            std::string("robot.kneeright.angle"),  std::string("robot.kneeright.anglerate"),
-                                            std::string("robot.kneeleft.angle"),   std::string("robot.kneeleft.anglerate"),
-                                            std::string("robot.ankleright.angle"), std::string("robot.ankleright.anglerate"),
-                                            std::string("robot.ankleleft.angle"),  std::string("robot.ankleleft.anglerate"),
-
-                                            std::string("robot.toeright.contact"), std::string("robot.heelright.contact"),
-                                            std::string("robot.toeleft.contact"),  std::string("robot.heelleft.contact")
-                                          };
-
-  std::vector<std::string> actuators = {  std::string("robot.shoulder.voltage"),
-                                                std::string("robot.hipright.voltage"),    std::string("robot.hipleft.voltage"),
-                                                std::string("robot.kneeright.voltage"),   std::string("robot.kneeleft.voltage"),
-                                                std::string("robot.ankleright.voltage"),  std::string("robot.ankleleft.voltage")
-                                             };
+  std::vector<std::string> actuators =  { std::string("robot.shoulder.voltage"),
+                                          std::string("robot.hipright.voltage"),  std::string("robot.hipleft.voltage"),
+                                          std::string("robot.kneeright.voltage"), std::string("robot.kneeleft.voltage"),
+                                          std::string("robot.ankleright.voltage"),std::string("robot.ankleleft.voltage")
+                                        };
 
   // Select states and actions that are delivered to an agent
   configParseObservations(config, sensors);
