@@ -110,6 +110,7 @@ LeoSquatTask *LeoSquatTask::clone() const
 void LeoSquatTask::start(int test, Vector *state) const
 {
   *state = ConstantVector(observation_dims_, 0);
+  /*
   *state <<
          1.0586571916803691E+00,
         -2.1266836153365212E+00,
@@ -119,6 +120,17 @@ void LeoSquatTask::start(int test, Vector *state) const
         -0.0,
         -0.0,
         -0.0,
+         0.0; // time
+  */
+  *state <<
+         1.07106,
+        -2.15961,
+         1.06803,
+        -0.2618,
+         0.23794,
+        -0.609729,
+         5.3124e-05,
+        -1.18169e-06,
          0.0; // time
 }
 

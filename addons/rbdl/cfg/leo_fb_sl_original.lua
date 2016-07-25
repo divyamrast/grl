@@ -50,7 +50,7 @@ armCMX = 0.05308
 armCMZ = -0.14260
 armIYY = 0.00087318718
 armJointX = (-0.00543)
-armJointY = 0--(shoulderoffsety + 0.005)
+armJointY = (shoulderoffsety + 0.005)
 armJointZ = (0.091275)
 
 upleglength = (0.116)
@@ -58,15 +58,15 @@ interlegdist = (0.06390)
 
 uplegMass = 0.17978
 uplegCMX = 0.00285
-uplegCMZ = -0.00481
+uplegCMZ = -0.00481 - upleglength/2
 uplegIYY = 0.000273133
 
 uplegLeftJointX = (torsoHipDistX)
-uplegLeftJointY = 0--(interlegdist/2)
+uplegLeftJointY = (interlegdist/2)
 uplegLeftJointZ = (torsoHipDistZ)
 
 uplegRightJointX = (torsoHipDistX)
-uplegRightJointY = 0--(-interlegdist/2)
+uplegRightJointY = (-interlegdist/2)
 uplegRightJointZ = (torsoHipDistZ)
 
 loleglength = (0.1045)
@@ -78,24 +78,24 @@ lolegIYY = 0.000153379
 
 lolegLeftJointX = (0.0)
 lolegLeftJointY = (0.0)
-lolegLeftJointZ = (upleglength/2)
+lolegLeftJointZ = (-upleglength)
 
 lolegRightJointX = (0.0)
 lolegRightJointY = (0.0)
-lolegRightJointZ = (upleglength/2)
+lolegRightJointZ = (-upleglength)
 
 footMass = 0.07319
-footCMX = 0.00048
-footCMZ = 0.00461
+footCMX = 0.00048+0.009
+footCMZ = 0.00461-0.03559
 footIYY = 0.000048812
 
-footLeftJointX = (0. - 0.00405)
+footLeftJointX = (0. + 0.00405)
 footLeftJointY = (0.)
-footLeftJointZ = (loleglength)
+footLeftJointZ = (-loleglength)
 
-footRightJointX = (0. - 0.00405)
+footRightJointX = (0.+0.00405)
 footRightJointY = (0.0)
-footRightJointZ = (loleglength)
+footRightJointZ = (-loleglength)
 
 -- for visuals
 dxlheight = 0.051
@@ -455,8 +455,7 @@ model = {
           --   coordinates = {0.0405, 0., 0.}
           -- },
           CoM = {
-            ---coordinates = {0.0351913, -0.00137974, 0.28}
-            coordinates = {0, 0, 0}
+            coordinates = {0.0351913, -0.00137974, 0.28}
           },
         }
       },
@@ -470,7 +469,7 @@ model = {
         },
         joint = joints.fixed,
         joint_frame = {
-          r = {0.0, 0.0, 0.0}
+          r = {-(-footlength/2 + 0.009), 0.5*interlegdist, footwheelradius + 0.03559}
         },
         visuals = visuals.foot,
         points = { -- draw contact points
@@ -503,7 +502,7 @@ model = {
         joint_frame = {
           -- r = {0.0, 0.0, 0.1}
           -- r = {-footLeftJointX, -footLeftJointY, -footLeftJointZ}
-          r = {footLeftJointX, footLeftJointY, footLeftJointZ}
+          r = {-footLeftJointX, -footLeftJointY, -footLeftJointZ}
         },
         visuals = visuals.lowerleg
       },
@@ -530,7 +529,7 @@ model = {
         },
         joint = joints.fixed,
         joint_frame = {
-          r = {lolegLeftJointX, lolegLeftJointY, lolegLeftJointZ}
+          r = {-lolegLeftJointX, -lolegLeftJointY, -lolegLeftJointZ}
         },
         visuals = visuals.upperleg
       },
@@ -558,7 +557,7 @@ model = {
         },
         joint = joints.fixed,
         joint_frame = {
-          r = {uplegLeftJointX, uplegLeftJointY, uplegLeftJointZ}
+          r = {-uplegLeftJointX, -uplegLeftJointY, -uplegLeftJointZ}
         },
         visuals = visuals.torso,
         points = { -- draw contact points
@@ -576,7 +575,7 @@ model = {
         joint = joints.lhinge,
         joint_frame = {
           r = {armJointX, armJointY, armJointZ},
-          --E = rotymatrix(armICangle),
+          E = rotymatrix(armICangle),
         },
         visuals = visuals.arm
       },

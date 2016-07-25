@@ -151,7 +151,7 @@ double SandboxDynamicalModel::step(const Vector &action, Vector *next)
   double tau = dm_.step(state0, action, next);
   //double tau = dm_.step(state0, ConstantVector(4, 0), next);
 
-  std::cout << "GRL: " << *next << std::endl;
+//  std::cout << "GRL: " << *next << std::endl;
 
   // augment state
   dm_.dynamics_->finalize(*next);
