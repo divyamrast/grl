@@ -150,7 +150,9 @@ TransitionType NMPCPolicy::act(double time, const Vector &in, Vector *out)
   grl_assert(outputs_  == nmpc_->NU());
 
   Vector in2 = in;
-  /*in2 <<
+  /*
+  // fb_sl
+  in2 <<
          1.0586571916803691E+00,
         -2.1266836153365212E+00,
          1.0680264236561250E+00,
@@ -158,13 +160,30 @@ TransitionType NMPCPolicy::act(double time, const Vector &in, Vector *out)
         -0.0,
         -0.0,
         -0.0,
-        -0.0;*/
+        -0.0;
+  */
+
+  // ff_sl
+  in2 <<
+         2.9285671132918734E-02,
+         2.7999999999998426E-01,
+         1.5000000000041891E-01,
+        -2.5999999999879975E-01,
+         1.2544763628954583E+00,
+        -2.1096010065342394E+00,
+         1.0051246436392001E+00,
+         0.0, // qdots
+         0.0, // qdots
+         0.0, // qdots
+         0.0, // qdots
+         0.0, // qdots
+         0.0, // qdots
+         0.0; // qdots
 
   if (time == 0.0)
-  {
     muscod_reset(in2, time);
-  }
 
+/*
   if (time < 20.0) {
     initial_pf_ << 0.28;
   }
@@ -172,7 +191,7 @@ TransitionType NMPCPolicy::act(double time, const Vector &in, Vector *out)
     initial_pf_ << 0.28 + ((time-20)/10.0)*(0.35-0.28);
   else
     initial_pf_ << 0.35;
-
+*/
 
   if (verbose_)
   {
@@ -200,7 +219,8 @@ TransitionType NMPCPolicy::act(double time, const Vector &in, Vector *out)
 
   // Run multiple NMPC iterations
   const unsigned int nnmpc = 1;
-  for (int inmpc = 0; inmpc < nnmpc; ++inmpc) {
+  for (int inmpc = 0; inmpc < nnmpc; ++inmpc)
+  {
     // 1) Feedback: Embed parameters and initial value from MHE
     // NOTE the same initial values (sd, pf) are embedded several time,
     //      but this will result in the same solution as running a MUSCOD
@@ -209,9 +229,9 @@ TransitionType NMPCPolicy::act(double time, const Vector &in, Vector *out)
     // 2) Shifting
     // NOTE do that only once at last iteration
     // NOTE this has to be done before the transition phase
-    if (nnmpc > 0 && inmpc == nnmpc-1) {
+    if (nnmpc > 0 && inmpc == nnmpc-1)
       nmpc_->shifting(1);
-    }
+
     // 3) Transition
     nmpc_->transition();
     // 4) Preparation

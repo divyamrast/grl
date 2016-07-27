@@ -52,13 +52,13 @@ h_sca
 ALL:  1.0
 
 h_min
-  0:  0.01
+  0:  1.0
 
 h_max
-  0:  5.0
+  0:  1.0
 
 h_fix
-  0:  1
+  0:  0
 
 h_name
   0: ! nmpc_horizon
@@ -281,7 +281,7 @@ of_max
 1000000.0
 
 of_name
-obj
+!obj
 
 nhist
 30
@@ -290,7 +290,7 @@ nhist
 * Choosing libraries *
 
 libmodel
-libleo_squat_sl
+libnmpc_leo_squat_ff_sl
 
 libhessian
 hess_gaussnewton
@@ -340,7 +340,7 @@ options_itol
 options_rfac
 0.00000
 options_levmar
-0.0001
+0.001
 options_qp_featol
 1.0e-8
 options_qp_relax
