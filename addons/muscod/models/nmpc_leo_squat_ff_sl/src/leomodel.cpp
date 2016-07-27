@@ -58,16 +58,19 @@ void LeoModel::updateState (
 	kinematicsUpdated = false;
 	momentumComputed = false;
 
-	for (unsigned int i = 0; i < nDof; i++) {
-		q[i] = sd[i];
-		qdot[i] = sd[i + nDof];
-	}
+		for (unsigned int i = 0; i < nDof; i++) {
+			q[i] = sd[i];
+			qdot[i] = sd[i + nDof];
+		}
 
-	assert (nDof == nActuatedDof);
-	for (unsigned int i = 0; i < nActuatedDof; i++) {
-    //tau[i] = u[i] - 0.1*qdot[i];
-		// TODO control on voltage level
-    tau[i] = torque_from_voltage_and_angular_velocity (u[i], qdot[i]);
+		assert (nDof - 3 == nActuatedDof);
+		for (unsigned int i = 0; i < nActuatedDof; i++) {
+			// tau[i + nDof - nActuatedDof] = u[i] - 0.01*qdot[i];
+			tau[i + nDof - nActuatedDof] =
+				torque_from_voltage_and_angular_velocity(
+					u[i], qdot[i + nDof - nActuatedDof]
+			);
+
 	}
 }
 
@@ -83,13 +86,13 @@ void LeoModel::updateKinematics ()
 void LeoModel::updateForwardDynamics ()
 {
 	if (!activeConstraintSet.empty()) {
-		// ForwardDynamicsContactsRangeSpaceSparse (
+	// ForwardDynamicsContactsRangeSpaceSparse (
 		ForwardDynamicsContactsNullSpace (
 		// ForwardDynamicsContactsDirect (
-			model, q, qdot, tau,
-			constraints[activeConstraintSet],
-			qddot
-		);
+		model, q, qdot, tau,
+		constraints[activeConstraintSet],
+		qddot
+	);
 	} else {
 		ForwardDynamics (model, q, qdot, tau, qddot);
 	}
@@ -111,16 +114,16 @@ void LeoModel::calcForwardDynamicsRhs (double *res)
 	// std::cout << "activeConstraintSet = " << activeConstraintSet << std::endl;
 	if (!activeConstraintSet.empty()) {
 		// std::cout << "evaluating 'ForwardDynamicsContactsNullSpace'" << std::endl;
-		// ForwardDynamicsContactsRangeSpaceSparse (
+	// ForwardDynamicsContactsRangeSpaceSparse (
 		ForwardDynamicsContactsNullSpace (
 		// ForwardDynamicsContactsDirect (
-			model, q, qdot, tau,
-			constraints[activeConstraintSet],
-			qddot
-		);
+		model, q, qdot, tau,
+		constraints[activeConstraintSet],
+		qddot
+	);
 	} else {
 		// std::cout << "evaluating 'ForwardDynamics'" << std::endl;
-    ForwardDynamics (model, q, qdot, tau, qddot);
+		ForwardDynamics (model, q, qdot, tau, qddot);
 	}
 	dynamicsComputed = true;
 
@@ -138,7 +141,7 @@ void LeoModel::calcCollisionImpactRhs (double *res)
 		model, q, qdot, constraints[activeConstraintSet], qdot_plus
 	);
 
-	for (unsigned int i = 0; i < nDof; i++) {
+		for (unsigned int i = 0; i < nDof; i++) {
 		res[i] = q[i];
 		res[i + nDof] = qdot_plus[i];
 	}
@@ -363,7 +366,7 @@ bool LeoModel::loadModelFromFile (const char* filename, bool verbose)
   }
 
 	nDof = model.dof_count;
-	nActuatedDof = nDof;
+	nActuatedDof = nDof - 3;
 
 	assert (nActuatedDof >= 1 && nActuatedDof <= nDof);
 
@@ -505,6 +508,13 @@ int main(int argc, char const *argv[])
 	leo.loadConstraintSetsFromFile (model_path.c_str(), true);
 	cout << "... successful!" << endl;
 
+	// set current active constraint set
+	// leo.activeConstraintSet = "double_support";
+	// MatrixNd G = leo.calcContactJacobian();
+	// cout << "Computing contact Jacobian ... " << endl;
+	// cout << G << endl;
+	// cout << "... successful!" << endl;
+
 	VectorNd q = VectorNd::Zero(leo.nDof);
 	VectorNd qdot = VectorNd::Zero(leo.nDof);
 	VectorNd qddot = VectorNd::Zero(leo.nDof);
@@ -512,13 +522,16 @@ int main(int argc, char const *argv[])
 	VectorNd rhs = VectorNd::Zero(2*leo.nDof);
 	// provide initial values
 	q <<
-	 0.05,
-	-0.1,
-	 0.1,
-	 0.0;
-	//  0.1,
-	// -0.1,
-	//  0.05;
+	 0.0,   // ff_x
+	 0.39,  // ff_z
+	 0.05,  // ff_q
+	 0.0,   // arm_q
+	-0.1,   // hip_left
+	-0.1,   // hip_right
+	 0.1,   // knee_left
+	 0.1,   // knee_right
+	-0.05,  // ankle_left
+	-0.05;  // ankle_right
 
 	// assign them to model
 	leo.q = q;
