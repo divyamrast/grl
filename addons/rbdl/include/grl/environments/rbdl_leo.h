@@ -87,9 +87,10 @@ class LeoSquatTask : public Task
     int failed(const Vector &state) const;
 
   protected:
-
-    int observation_dims_, action_dims_;
     double timeout_;
+    Vector observation_min_, observation_max_;
+    Vector action_min_, action_max_;
+    int observation_dims_, action_dims_;
 };
 
 

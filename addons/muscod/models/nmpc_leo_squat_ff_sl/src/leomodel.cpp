@@ -70,7 +70,6 @@ void LeoModel::updateState (
 				torque_from_voltage_and_angular_velocity(
 					u[i], qdot[i + nDof - nActuatedDof]
 			);
-
 	}
 }
 
@@ -126,7 +125,12 @@ void LeoModel::calcForwardDynamicsRhs (double *res)
 		ForwardDynamics (model, q, qdot, tau, qddot);
 	}
 	dynamicsComputed = true;
-
+/*
+  std::cout << q << std::endl;
+  std::cout << qdot << std::endl;
+  std::cout << tau << std::endl;
+  std::cout << qddot << std::endl;
+*/
 	for (unsigned int i = 0; i < nDof; i++) {
 		res[i] = qdot[i];
 		res[i + nDof] = qddot[i];
@@ -485,7 +489,7 @@ bool LeoModel::loadConstraintSetsFromFile (const char* filename, bool verbose) {
 
 // string model_path = "leo.lua";
 // string model_path = "leo_dl.lua";
-string model_path = "leo_fb_sl.lua";
+string model_path = "leo_ff_sl.lua";
 
 int main(int argc, char const *argv[])
 {

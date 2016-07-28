@@ -144,11 +144,19 @@ double SandboxDynamicalModel::step(const Vector &action, Vector *next)
   // reduce state
   const Vector state0 = state_.block(0, 0, 1, 2*dof_count_+1);
 
+  // fill action vector with 0s in the beginning if there are unactuated dofs
+  Vector action0;
+  action0.resize(dof_count_);
+  if (action.size() != dof_count_)
+    action0 << ConstantVector(dof_count_ - action.size(), 0), action;
+  else
+    action0 << action;
+
 //  std::cout << state0 << std::endl;
-//  std::cout << action << std::endl;
+//  std::cout << action0 << std::endl;
 
   // call dynamics of the reduced state
-  double tau = dm_.step(state0, action, next);
+  double tau = dm_.step(state0, action0, next);
   //double tau = dm_.step(state0, ConstantVector(4, 0), next);
 
 //  std::cout << "GRL: " << *next << std::endl;

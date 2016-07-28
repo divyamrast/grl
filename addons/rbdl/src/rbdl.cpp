@@ -28,8 +28,10 @@
 #include <sys/stat.h>
 #include <libgen.h>
 
-#include <rbdl/rbdl.h>
+//#include <rbdl/rbdl.h>
 #include <rbdl/addons/luamodel/luamodel.h>
+#include <rbdl/addons/luamodel/luatables.h>
+#include <rbdl/rbdl_mathutils.h>
 
 #include <grl/lua_utils.h>
 #include <grl/environments/rbdl.h>
@@ -111,15 +113,22 @@ void RBDLDynamics::eom(const Vector &state, const Vector &action, Vector *xd) co
     qd[ii] = state[ii + dim];
   }
 
+  grl_assert(dim == 7); // ff_sl
   for (size_t ii=0; ii < dim; ++ii)
   {
     const double Kt = 0.00992;
     const double G = 193.0;
     const double R = 8.6;
-    u[ii] = Kt*G*(u[ii] - Kt*G*qd[ii])/R;
+    if (ii >= 3)
+      u[ii] = Kt*G*(u[ii] - Kt*G*qd[ii])/R;
+    else
+      u[ii] = 0;
   }
 
-  RigidBodyDynamics::ForwardDynamics(*rbdl->model, q, qd, u, qdd);
+  if (!constraints.empty())
+    ForwardDynamicsContactsNullSpace(*rbdl->model, q, qd, u, constraints["double_support"], qdd);
+  else
+    RigidBodyDynamics::ForwardDynamics(*rbdl->model, q, qd, u, qdd);
 /*
   std::cout << q << std::endl;
   std::cout << qd << std::endl;
@@ -134,6 +143,113 @@ void RBDLDynamics::eom(const Vector &state, const Vector &action, Vector *xd) co
     (*xd)[ii + dim] = qdd[ii];
   }
   (*xd)[2*dim] = 1.;
+}
+
+bool RBDLDynamics::loadPointsFromFile(const char* filename, RigidBodyDynamics::Model *model, bool verbose) const
+{
+  LuaTable lua_table = LuaTable::fromFile (filename);
+
+  int point_count = lua_table["points"].length();
+
+  for (int pi = 1; pi <= point_count; pi++)
+  {
+    Point point = lua_table["points"][pi];
+    point.body_id = model->GetBodyId (point.body_name.c_str());
+
+    points[point.name] = point;
+
+    if (verbose)
+    {
+      std::cout << " Adding Point: " << point.name << std::endl;
+      std::cout << "    body =        " << point.body_name << " (id = " << point.body_id << ")" << std::endl;
+      std::cout << "    point_local = [" << point.point_local.transpose() << "]" << std::endl;
+    }
+  }
+
+  // check whether we missed some points
+  if (points.size() != point_count)
+  {
+    std::cerr << "Error: not all contact points have been loaded!" << std::endl;
+    abort();
+  }
+
+  return true;
+}
+
+bool RBDLDynamics::loadConstraintSetsFromFile(const char* filename, RigidBodyDynamics::Model *model, bool verbose) const
+{
+  // initialize Constraint Sets
+  LuaTable lua_table = LuaTable::fromFile (filename);
+
+  std::vector<LuaKey> constraint_set_keys = lua_table["constraint_sets"].keys();
+  std::vector<std::string> constraint_set_names;
+  for (size_t i = 0; i < constraint_set_keys.size(); i++)
+  {
+    if (constraint_set_keys[i].type == LuaKey::String)
+    {
+      constraint_set_names.push_back (constraint_set_keys[i].string_value);
+    }
+    else
+    {
+      std::cerr << "Found invalid constraint set name, string expected!" << std::endl;
+      abort();
+    }
+  }
+
+  for (size_t si = 0; si < constraint_set_names.size(); si++)
+  {
+    std::string set_name_str = constraint_set_names[si];
+
+    if (verbose)
+      std::cout << "ConstraintSet '" << set_name_str << std::endl;
+
+    unsigned int constraint_count = lua_table["constraint_sets"][constraint_set_names[si].c_str()].length();
+
+    RigidBodyDynamics::ConstraintSet cs;
+    ConstraintSetInfo csi;
+    csi.name = set_name_str;
+    csi.constraints.resize (constraint_count);
+
+    for (int ci = 0; ci < constraint_count; ci++)
+    {
+      ConstraintInfo constraint_info =
+      lua_table["constraint_sets"][set_name_str.c_str()][ci + 1];
+      std::string point_name = constraint_info.point_name.c_str();
+      constraint_info.point_id = ci;
+
+      if (verbose)
+      {
+        std::cout << "  Adding Constraint point: " << points[point_name].name << std::endl;
+        std::cout << "    body id = " << points[point_name].body_id << std::endl;
+        std::cout << "    normal =  [" << constraint_info.normal.transpose() << "]" << std::endl;
+      }
+      cs.AddConstraint (
+        points[point_name].body_id,
+        points[point_name].point_local,
+        constraint_info.normal
+      );
+      csi.constraints[ci] = constraint_info;
+    }
+
+    // save constraint set infos
+    //constraintSetInfos[set_name_str] = csi;
+
+    // assign constraint set
+    constraints[set_name_str] = cs;
+    // TODO check which solver works better
+    constraints[set_name_str].linear_solver = RigidBodyDynamics::Math::LinearSolverHouseholderQR;
+    // constraintSets[set_name].linear_solver = LinearSolverPartialPivLU;
+    constraints[set_name_str].Bind (*model);
+  }
+
+  // check whether we missed some sets
+  if (constraints.size() != constraint_set_names.size())
+  {
+    std::cerr << "Error: not all constraint sets have been loaded!" << std::endl;
+    abort();
+  }
+
+  return true;
 }
 
 RBDLState *RBDLDynamics::createRBDLState() const
@@ -181,6 +297,11 @@ RBDLState *RBDLDynamics::createRBDLState() const
   }
   
   NOTICE("Loaded RBDL model with " << rbdl->model->dof_count << " degrees of freedom");
+
+  // Load optional things
+  bool verbose = true;
+  loadPointsFromFile(file_.c_str(), rbdl->model, verbose);
+  loadConstraintSetsFromFile(file_.c_str(), rbdl->model, verbose);
   
   return rbdl;
 }

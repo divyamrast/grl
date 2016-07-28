@@ -290,7 +290,7 @@ environment/communicator:
     type: communicator
     description: Comunicator which exchanges messages with an actual environment
     mutability: configuration
-    default: 0xd9bf50
+    default: 0x3fcf3b645a1cac0a
     optional: 0
 environment/leo2:
   description: LEO/2 environment
@@ -3306,25 +3306,33 @@ task/leoSquat:
     description: Number of observation dimensions
     mutability: provided
   observation_min:
-    type: vector.observation_min
-    description: Lower limit on observations
-    mutability: provided
+    type: string
+    description: vector.observation_min
+    mutability: system
+    default: Lower limit on observations
+    optional: 1
   observation_max:
-    type: vector.observation_max
-    description: Upper limit on observations
-    mutability: provided
+    type: string
+    description: vector.observation_max
+    mutability: system
+    default: Upper limit on observations
+    optional: 1
   action_dims:
     type: int.action_dims
     description: Number of action dimensions
     mutability: provided
   action_min:
-    type: vector.action_min
-    description: Lower limit on actions
-    mutability: provided
+    type: string
+    description: vector.action_min
+    mutability: system
+    default: Lower limit on actions
+    optional: 1
   action_max:
-    type: vector.action_max
-    description: Upper limit on actions
-    mutability: provided
+    type: string
+    description: vector.action_max
+    mutability: system
+    default: Upper limit on actions
+    optional: 1
   reward_min:
     type: double.reward_min
     description: Lower limit on immediate reward

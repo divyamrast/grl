@@ -30,6 +30,8 @@
 
 #include <functional>
 #include <grl/environment.h>
+#include <rbdl/rbdl.h>
+#include <grl/environments/LuaBasic.h>
 
 namespace RigidBodyDynamics {}
 
@@ -57,6 +59,11 @@ class RBDLDynamics : public Dynamics
   public:
     std::string file_, options_;
     mutable Instance<RBDLState> rbdl_state_;
+
+    // Do we need poitns??? if not, move "#include <grl/environments/LuaBasic.h>" back to .cpp
+    mutable std::map<std::string, Point> points;
+    //std::map<std::string, ConstraintSetInfo> constraintSetInfos;
+    mutable std::map<std::string, RigidBodyDynamics::ConstraintSet> constraints;
   
   public:
     RBDLDynamics() : rbdl_state_(std::bind(&RBDLDynamics::createRBDLState, this)) { }
@@ -72,6 +79,8 @@ class RBDLDynamics : public Dynamics
     
   protected:
     RBDLState *createRBDLState() const;
+    bool loadPointsFromFile(const char* filename, RigidBodyDynamics::Model *model, bool verbose) const;
+    bool loadConstraintSetsFromFile(const char* filename, RigidBodyDynamics::Model *model, bool verbose) const;
 };
 
 struct LuaState
